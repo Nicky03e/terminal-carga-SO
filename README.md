@@ -13,6 +13,7 @@ Simulador de una terminal logística implementado en **C con hilos POSIX**, sem�
 Nicole Masis Brenes
 | Integrante 2 | 
 | Integrante 3 |
+Joseph Elías Ulate Aguilar
 
 ---
 
