@@ -10,11 +10,9 @@ Simulador de una terminal logística implementado en **C con hilos POSIX**, sem�
 ---
 
 ## 👥 Integrantes
-| Nombre | Carné |
-|--------|-------|
-| Nicole Masis Brenes| 118930463 |
-| Integrante 2 | |
-| Integrante 3 | |
+Nicole Masis Brenes
+| Integrante 2 | 
+| Integrante 3 |
 
 ---
 
