@@ -4,10 +4,10 @@
 ---
 
 ## Integrantes
-Nicole Masis Brenes
-Brenda Serrano Jimenez 
-Mariana Madrigal Molina
-Joseph Elías Ulate Aguilar
+- Nicole Masis Brenes
+- Brenda Serrano Jimenez 
+- Mariana Madrigal Molina
+- Joseph Elías Ulate Aguilar
 
 ---
 
