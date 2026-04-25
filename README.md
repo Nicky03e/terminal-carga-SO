@@ -1,56 +1,34 @@
-# terminal-carga-SO
-Proyecto 1 - Sistemas Operativos EIF212
-
-```
-# 🚛 Terminal de Carga Automatizada
-### EIF 212 — Sistemas Operativos | I Ciclo 2026
-
-Simulador de una terminal logística implementado en **C con hilos POSIX**, semáforos y mutex. Modela el acceso concurrente de camiones a muelles de carga con dos algoritmos de planificación.
+# Sistema de Gestión de una Terminal de Carga Automatizada
+# EIF 212 — Sistemas Operativos | I Ciclo 2026
 
 ---
 
-## 👥 Integrantes
+## Integrantes
 Nicole Masis Brenes
-| Integrante 2 | 
-| Integrante 3 |
+Brenda Serrano Jimenez 
+Mariana Madrigal Molina
 Joseph Elías Ulate Aguilar
 
 ---
 
-## 📋 Descripción General
+## Descripción General
 
-El sistema simula una terminal donde múltiples **Camiones (hilos)** compiten por acceder a **Muelles de Carga (Sección Crítica)**. El programa implementa:
+El sistema simula una terminal donde múltiples Camiones (hilos) compiten por acceder a Muelles de Carga (Sección Crítica). El programa implementa:
 
-- **Hilos POSIX** (`pthreads`) con ciclo de vida completo de 5 estados
-- **Semáforos** para controlar el acceso a los 3 muelles simultáneos
-- **Mutex** para proteger el log de operaciones compartido
-- **Dos algoritmos de planificación:** FIFO y Round Robin con prioridad
-
----
-
-## ⚙️ Requisitos
-
-- Linux o WSL (Ubuntu)
-- GCC con soporte para pthreads
-
-```bash
-gcc --version
-```
+- Hilos POSIX (`pthreads`) con ciclo de vida completo de 5 estados
+- Semáforos para controlar el acceso a los 3 muelles simultáneos
+- Mutex para proteger el log de operaciones compartido
+- Dos algoritmos de planificación: FIFO y Round Robin con prioridad
 
 ---
 
-## 🔧 Compilación y Ejecución
-
-```bash
+##  Compilación y Ejecución
 gcc -o terminal terminal.c -lpthread
 ./terminal
-```
 
 ---
 
-## 🏗️ Arquitectura del Sistema
-
-### Componentes principales
+## Componentes principales
 
 | Componente | Descripción |
 |------------|-------------|
@@ -60,9 +38,8 @@ gcc -o terminal terminal.c -lpthread
 | `pthread_mutex_t log_mutex` | Mutex que protege el log de operaciones compartido |
 | Cola con prioridad | Ordena camiones: prioridad 1 (perecederos) antes que prioridad 2 (normal) |
 
-### Ciclo de vida de cada Camión (hilo)
+## Ciclo de vida de cada Camión (hilo)
 
-```
 pthread_create()
       │
       ▼
@@ -70,7 +47,7 @@ pthread_create()
                           │               │
                      sem_wait()      sem_post()
                      (espera muelle) (libera muelle)
-```
+
 
 | Estado | Descripción |
 |--------|-------------|
@@ -82,56 +59,55 @@ pthread_create()
 
 ---
 
-## 🔒 Sincronización
+## Sincronización
 
 ### Semáforos — Control de Muelles
-```c
-sem_init(&muelles, 0, 3);   // Máximo 3 camiones simultáneos
-sem_wait(&muelles);          // Entra al muelle (bloquea si están llenos)
+
+sem_init(&muelles, 0, 3);  -  Máximo 3 camiones simultáneos
+sem_wait(&muelles);        - Entra al muelle (bloquea si están llenos)
 // --- Sección Crítica ---
-sem_post(&muelles);          // Sale del muelle (libera espacio)
-```
+sem_post(&muelles);        - Sale del muelle (libera espacio)
+
 
 ### Mutex — Log de Operaciones
-```c
-pthread_mutex_lock(&log_mutex);    // Entra a sección crítica del log
-printf("...");                      // Escribe sin interferencia
-pthread_mutex_unlock(&log_mutex);  // Libera el log
-```
+
+pthread_mutex_lock(&log_mutex);   -  Entra a sección crítica del log
+printf("...");                    -  Escribe sin interferencia
+pthread_mutex_unlock(&log_mutex); -  Libera el log
 
 ---
 
-## 📅 Algoritmos de Planificación
+##  Algoritmos de Planificación
 
 ### FIFO con Prioridad
-- Los camiones se atienden **en orden de llegada**
-- Los de **prioridad 1 (perecederos)** se insertan al frente de la cola
-- Un camión ocupa el muelle hasta **completar toda su carga** (sin desalojo)
-- Puede generar **Efecto Convoy** si un camión lento bloquea a los demás
+- Los camiones se atienden en orden de llegada
+- Los de prioridad 1 se insertan al frente de la cola
+- Un camión ocupa el muelle hasta completar toda su carga
+- Puede generar Efecto Convoy si un camión lento bloquea a los demás
 
 ### Round Robin con Prioridad
-- Cada camión ocupa el muelle máximo **QUANTUM = 2 segundos**
-- Si no termina, es **desalojado** y vuelve al final de la cola
+- Cada camión ocupa el muelle máximo QUANTUM = 2 segundos
+- Si no termina, es desalojado y vuelve al final de la cola
 - Respeta prioridades al reinsertar en la cola
-- Mayor **equidad** pero más cambios de contexto
+- Mayor equidad pero más cambios de contexto
 
 ---
 
-## 🛡️ Prevención de Deadlock
+## Prevención de Deadlock
 
 El sistema previene el interbloqueo mediante:
 
-1. **Orden fijo de adquisición:** Siempre se adquiere primero el semáforo del muelle y luego el mutex del log. Nunca se invierte este orden, eliminando la espera circular.
+1. Orden fijo de adquisición Siempre se adquiere primero el semáforo del muelle y luego el mutex del log. Nunca se invierte este orden, eliminando la espera circular.
 
-2. **Secciones críticas mínimas:** El mutex del log se mantiene bloqueado solo el tiempo necesario para imprimir un mensaje y se libera de inmediato.
+2. Secciones críticas mínimas El mutex del log se mantiene bloqueado solo el tiempo necesario para imprimir un mensaje y se libera de inmediato.
 
-3. **Sin espera circular:** Ningún hilo espera un recurso que tiene otro hilo mientras ese otro espera un recurso del primero.
+3. Sin espera circular: Ningún hilo espera un recurso que tiene otro hilo mientras ese otro espera un recurso del primero.
 
-4. **`pthread_join` garantiza limpieza:** El proceso principal espera a todos los hilos antes de destruir semáforos y mutexes.
+4. `pthread_join` garantiza limpieza: El proceso principal espera a todos los hilos antes de destruir semáforos y mutexes.
 
 ---
 
-## 📊 Resultados — Tabla Comparativa
+## Resultados — Tabla Comparativa
 
 | Algoritmo | Camión | Prioridad | Espera (s) | Turnaround (s) |
 |-----------|--------|-----------|-----------|----------------|
@@ -152,7 +128,7 @@ El sistema previene el interbloqueo mediante:
 | Round Robin | #6 | ALTA | 2.32 | 4.32 |
 | Round Robin | #7 | NORMAL | 3.21 | 4.21 |
 | Round Robin | #8 | ALTA | 4.12 | 7.12 |
-| **Round Robin** | **PROMEDIO** | — | **2.72** | **5.10** |
+| Round Robin | PROMEDIO | — | 2.72 | 5.10* |
 
 ### Análisis
 
@@ -161,18 +137,6 @@ El sistema previene el interbloqueo mediante:
 | FIFO | 1.88s | 4.26s | Efecto Convoy en camiones tardíos |
 | Round Robin | 2.72s | 5.10s | Mayor equidad, más cambios de contexto |
 
-- **FIFO** fue más eficiente en tiempo promedio para cargas cortas, pero el camión #8 esperó 4.41s atrapado detrás de otros (Efecto Convoy).
-- **Round Robin** distribuyó la espera más equitativamente. Ningún camión superó los 4.12s de espera.
-- Los camiones con **prioridad ALTA** obtuvieron menores tiempos en ambos algoritmos, validando el sistema de prioridades.
-
----
-
-## 📁 Estructura del Proyecto
-
-```
-terminal-carga-SO/
-│
-├── terminal.c      # Código fuente principal
-└── README.md       # Documentación del proyecto
-```
-```
+- En las pruebas, FIFO salió con mejores números en promedio, el camión #8 tuvo que esperar 4.41 segundos porque le tocó detrás de otros, eso es exactamente el           problema que queríamos evitar con las prioridades, y se nota que con FIFO no siempre se logra.
+- Round Robin repartió mejor la espera entre todos los camiones. Ninguno pasó de 4.12 segundos esperando, esto tiene sentido porque el quantum evita que un solo camión   acapare el muelle, pero la consecuencia es que el tiempo total sube porque hay más cambios de contexto.
+- Lo que sí funcionó en ambos casos fue la prioridad, los camiones con prioridad alta entraron antes que los normales, que era el objetivo principal del sistema.
