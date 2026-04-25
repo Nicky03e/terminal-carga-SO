@@ -63,17 +63,17 @@ pthread_create()
 
 ### Semáforos — Control de Muelles
 
-sem_init(&muelles, 0, 3);  -  Máximo 3 camiones simultáneos
-sem_wait(&muelles);        - Entra al muelle (bloquea si están llenos)
-// --- Sección Crítica ---
-sem_post(&muelles);        - Sale del muelle (libera espacio)
+- sem_init(&muelles, 0, 3);  -  Máximo 3 camiones simultáneos
+- sem_wait(&muelles);        - Entra al muelle (bloquea si están llenos)
+- // --- Sección Crítica ---
+- sem_post(&muelles);        - Sale del muelle (libera espacio)
 
 
 ### Mutex — Log de Operaciones
 
-pthread_mutex_lock(&log_mutex);   -  Entra a sección crítica del log
-printf("...");                    -  Escribe sin interferencia
-pthread_mutex_unlock(&log_mutex); -  Libera el log
+- pthread_mutex_lock(&log_mutex);   -  Entra a sección crítica del log
+- printf("...");                    -  Escribe sin interferencia
+- pthread_mutex_unlock(&log_mutex); -  Libera el log
 
 ---
 
