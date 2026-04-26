@@ -38,27 +38,6 @@ gcc -Wall src/*.c -o terminal_carga -I include -lpthread
 
 ---
 
-## Estructura del Proyecto
-
-```
-terminal_carga/
-├── Makefile
-├── include/
-│   ├── tipos.h        ← structs, enums, constantes
-│   ├── globals.h      ← declaraciones extern de variables globales
-│   ├── utils.h        ← tiempo, log, inventario, tabla
-│   ├── cola.h         ← cola_agregar / cola_sacar
-│   └── planificador.h ← ciclo_fifo / planificador_rr
-└── src/
-    ├── globals.c      ← definición de todas las variables globales
-    ├── utils.c        ← implementación de utilidades
-    ├── cola.c         ← implementación de la cola circular
-    ├── planificador.c ← FIFO y Round Robin
-    └── main.c         ← main, inicialización, flujo principal
-```
-
----
-
 ## Componentes principales
 
 | Componente | Descripción |
