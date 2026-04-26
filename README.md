@@ -22,9 +22,40 @@ El sistema simula una terminal donde múltiples Camiones (hilos) compiten por ac
 
 ---
 
-##  Compilación y Ejecución
-gcc -o terminal terminal.c -lpthread
-./terminal
+## Compilación y Ejecución
+
+```bash
+make
+./terminal_carga
+```
+
+O sin make:
+
+```bash
+gcc -Wall src/*.c -o terminal_carga -I include -lpthread
+./terminal_carga
+```
+
+---
+
+## Estructura del Proyecto
+
+```
+terminal_carga/
+├── Makefile
+├── include/
+│   ├── tipos.h        ← structs, enums, constantes
+│   ├── globals.h      ← declaraciones extern de variables globales
+│   ├── utils.h        ← tiempo, log, inventario, tabla
+│   ├── cola.h         ← cola_agregar / cola_sacar
+│   └── planificador.h ← ciclo_fifo / planificador_rr
+└── src/
+    ├── globals.c      ← definición de todas las variables globales
+    ├── utils.c        ← implementación de utilidades
+    ├── cola.c         ← implementación de la cola circular
+    ├── planificador.c ← FIFO y Round Robin
+    └── main.c         ← main, inicialización, flujo principal
+```
 
 ---
 
@@ -75,6 +106,14 @@ pthread_create()
 - printf("...");                    -  Escribe sin interferencia
 - pthread_mutex_unlock(&log_mutex); -  Libera el log
 
+### Mutex — Inventario Compartido
+
+```c
+pthread_mutex_lock(&mutex_inventario);
+inventario_global.unidades_cargadas += cantidad_cargada;
+pthread_mutex_unlock(&mutex_inventario);
+```
+
 ---
 
 ##  Algoritmos de Planificación
@@ -109,34 +148,35 @@ El sistema previene el interbloqueo mediante:
 
 ## Resultados — Tabla Comparativa
 
-| Algoritmo | Camión | Prioridad | Espera (s) | Turnaround (s) |
-|-----------|--------|-----------|-----------|----------------|
-| FIFO | #1 | NORMAL | 0.00 | 3.01 |
-| FIFO | #2 | ALTA | 0.00 | 2.00 |
-| FIFO | #3 | NORMAL | 0.00 | 4.00 |
-| FIFO | #4 | ALTA | 1.80 | 2.80 |
-| FIFO | #5 | NORMAL | 2.61 | 5.61 |
-| FIFO | #6 | ALTA | 2.60 | 4.62 |
-| FIFO | #7 | NORMAL | 3.60 | 4.60 |
-| FIFO | #8 | ALTA | 4.41 | 7.41 |
-| **FIFO** | **PROMEDIO** | — | **1.88** | **4.26** |
-| Round Robin | #1 | NORMAL | 2.83 | 5.83 |
-| Round Robin | #2 | ALTA | 0.71 | 2.71 |
-| Round Robin | #3 | NORMAL | 2.64 | 6.64 |
-| Round Robin | #4 | ALTA | 2.51 | 3.51 |
-| Round Robin | #5 | NORMAL | 3.43 | 6.43 |
-| Round Robin | #6 | ALTA | 2.32 | 4.32 |
-| Round Robin | #7 | NORMAL | 3.21 | 4.21 |
-| Round Robin | #8 | ALTA | 4.12 | 7.12 |
-| Round Robin | PROMEDIO | — | 2.72 | 5.10* |
+| Algoritmo | Camión | Empresa | Prioridad | Espera (s) | Turnaround (s) |
+|-----------|--------|---------|-----------|------------|----------------|
+| FIFO | #1 | Emp #1 | NORMAL | 0.00 | 3.00 |
+| FIFO | #2 | Emp #1 | ALTA | 0.00 | 2.00 |
+| FIFO | #3 | Emp #2 | NORMAL | 2.80 | 6.80 |
+| FIFO | #4 | Emp #2 | ALTA | 1.80 | 2.80 |
+| FIFO | #5 | Emp #3 | NORMAL | 4.60 | 7.60 |
+| FIFO | #6 | Emp #3 | ALTA | 2.50 | 4.50 |
+| FIFO | #7 | Emp #4 | NORMAL | 6.40 | 7.40 |
+| FIFO | #8 | Emp #4 | ALTA | 2.40 | 5.40 |
+| **FIFO** | **PROMEDIO** | — | — | **2.56** | **4.94** |
+| Round Robin | #1 | Emp #1 | NORMAL | 2.81 | 5.81 |
+| Round Robin | #2 | Emp #1 | ALTA | 0.70 | 2.70 |
+| Round Robin | #3 | Emp #2 | NORMAL | 3.60 | 7.60 |
+| Round Robin | #4 | Emp #2 | ALTA | 0.50 | 1.50 |
+| Round Robin | #5 | Emp #3 | NORMAL | 3.40 | 6.40 |
+| Round Robin | #6 | Emp #3 | ALTA | 0.30 | 2.30 |
+| Round Robin | #7 | Emp #4 | NORMAL | 4.20 | 5.20 |
+| Round Robin | #8 | Emp #4 | ALTA | 3.10 | 6.10 |
+| **Round Robin** | **PROMEDIO** | — | — | **2.33** | **4.70** |
+
 
 ### Análisis
 
 | Algoritmo | Espera Promedio | Turnaround Promedio | Observación |
 |-----------|----------------|---------------------|-------------|
-| FIFO | 1.88s | 4.26s | Efecto Convoy en camiones tardíos |
-| Round Robin | 2.72s | 5.10s | Mayor equidad, más cambios de contexto |
+| FIFO | 2.56s | 4.94s | Efecto Convoy visible en camiones normales tardíos |
+| Round Robin | 2.33s | 4.70s | Mayor equidad, más cambios de contexto |
 
-- En las pruebas, FIFO salió con mejores números en promedio, el camión #8 tuvo que esperar 4.41 segundos porque le tocó detrás de otros, eso es exactamente el           problema que queríamos evitar con las prioridades, y se nota que con FIFO no siempre se logra.
-- Round Robin repartió mejor la espera entre todos los camiones. Ninguno pasó de 4.12 segundos esperando, esto tiene sentido porque el quantum evita que un solo camión   acapare el muelle, pero la consecuencia es que el tiempo total sube porque hay más cambios de contexto.
-- Lo que sí funcionó en ambos casos fue la prioridad, los camiones con prioridad alta entraron antes que los normales, que era el objetivo principal del sistema.
+- En las pruebas, FIFO mostró el Efecto Convoy claramente: el Camión #7 (normal) esperó 6.40 segundos porque los camiones de alta prioridad se atendieron primero. Eso es exactamente el problema que las prioridades buscan mitigar, pero dentro de la misma prioridad FIFO no ofrece equidad.
+- Round Robin repartió mejor la espera entre todos los camiones. Ninguno superó los 4.20 segundos esperando, porque el quantum evita que un solo camión acapare el muelle. La consecuencia es un leve aumento en cambios de contexto.
+- Lo que funcionó en ambos casos fue la prioridad: los camiones perecederos (prioridad 1) entraron antes que los normales, que era el objetivo principal del sistema.
