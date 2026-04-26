@@ -25,13 +25,6 @@ El sistema simula una terminal donde múltiples Camiones (hilos) compiten por ac
 ## Compilación y Ejecución
 
 ```bash
-make
-./terminal_carga
-```
-
-O sin make:
-
-```bash
 gcc -Wall src/*.c -o terminal_carga -I include -lpthread
 ./terminal_carga
 ```
